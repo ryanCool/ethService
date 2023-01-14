@@ -1,6 +1,10 @@
 export DATABASE_DIALECT=postgres
-export DATABASE_USERNAME=user
+export DATABASE_USERNAME=postgres
 export DATABASE_PASSWORD=ethService0114
 export DATABASE_HOST=localhost
 export DATABASE_PORT=5432
 export DATABASE_NAME=postgres
+export SERVER_HOST=0.0.0.0
+export SERVER_PORT=8080
+export CONTEXT_TIMEOUT_SECS=10
+export GIN_MODE=debug

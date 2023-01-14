@@ -6,11 +6,15 @@ services:
       dockerfile: Dockerfile
     environment:
       DATABASE_DIALECT: postgres
-      DATABASE_USERNAME: user
+      DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: ethService0114
       DATABASE_HOST: db
       DATABASE_PORT: 5432
       DATABASE_NAME: postgres
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+      CONTEXT_TIMEOUT_SECS: 10
+      GIN_MODE: debug
     restart: 'always'
     depends_on:
       - 'db'
@@ -27,7 +31,9 @@ services:
       - "log_disconnections=yes"
       - "-c"
       - "log_statement=all"
+    volumes:
+      - ./db_seed.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
-      - POSTGRES_USER=user
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=ethService0114
     restart: always
