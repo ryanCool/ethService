@@ -9,7 +9,7 @@ GRANT ALL ON SCHEMA eth TO postgres;
 -- Table: public.block
 CREATE TABLE IF NOT EXISTS eth.blocks
 (
-    number BIGINT PRIMARY KEY,
+    block_num BIGINT PRIMARY KEY,
     block_hash   VARCHAR(255) UNIQUE NOT NULL,
     block_time   BIGINT,
     parent_hash VARCHAR(255),
