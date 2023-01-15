@@ -14,10 +14,11 @@ import (
 )
 
 type blockUseCase struct {
-	repo           domain.BlockRepository
-	rpcClient      *ethclient.Client
-	wsClient       *ethclient.Client
-	contextTimeout time.Duration
+	repo             domain.BlockRepository
+	rpcClient        *ethclient.Client
+	wsClient         *ethclient.Client
+	transactionUcase domain.TransactionUseCase
+	contextTimeout   time.Duration
 }
 
 var syncFromNBlock *big.Int
@@ -35,12 +36,13 @@ func (bu *blockUseCase) Initialize(ctx context.Context) {
 	go bu.scanToLatest(ctx)
 }
 
-func NewBlockUseCase(a domain.BlockRepository, timeout time.Duration, rpcClient *ethclient.Client, wsClient *ethclient.Client) domain.BlockUseCase {
+func NewBlockUseCase(a domain.BlockRepository, t domain.TransactionUseCase, timeout time.Duration, rpcClient *ethclient.Client, wsClient *ethclient.Client) domain.BlockUseCase {
 	return &blockUseCase{
-		repo:           a,
-		contextTimeout: timeout,
-		wsClient:       wsClient,
-		rpcClient:      rpcClient,
+		repo:             a,
+		transactionUcase: t,
+		contextTimeout:   timeout,
+		wsClient:         wsClient,
+		rpcClient:        rpcClient,
 	}
 }
 
@@ -78,7 +80,7 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 				stable = false
 			}
 
-			block, err := bu.FetchBlock(ctx, big.NewInt(int64(targetBlockNum)), stable)
+			block, transactions, err := bu.FetchBlock(ctx, big.NewInt(int64(targetBlockNum)), stable)
 			if err != nil {
 				log.Err(err).Msg("Fetch block fail when sync to latest block")
 			}
@@ -87,11 +89,16 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 				return
 			}
 
+			for _, transaction := range transactions {
+				go bu.transactionUcase.SaveTransaction(ctx, block.BlockHash, transaction)
+			}
+
 			//it may cause some duplicate key err, but i don't think it would be a issue
 			err = bu.newBlock(ctx, block)
 			if err != nil {
 				log.Err(err).Msg("New block fail when sync to latest block")
 			}
+
 			//job done , and release worker
 			<-c
 		}(latestNum, targetBlockNum.Uint64())
@@ -118,9 +125,13 @@ func (bu *blockUseCase) setOldBlock(ctx context.Context, oldBlockNum uint64) {
 	if err != nil && err != domain.ErrBlockNotExist {
 		log.Error().Err(err)
 	} else if err == domain.ErrBlockNotExist {
-		b, err := bu.FetchBlock(ctx, big.NewInt(int64(oldBlockNum)), true)
+		b, transactions, err := bu.FetchBlock(ctx, big.NewInt(int64(oldBlockNum)), true)
 		if err != nil {
 			log.Error().Err(err)
+		}
+
+		for _, transaction := range transactions {
+			go bu.transactionUcase.SaveTransaction(ctx, b.BlockHash, transaction)
 		}
 
 		err = bu.newBlock(ctx, b)
@@ -165,17 +176,17 @@ func wrapBlockDb(block *types.Block, stable bool) *domain.BlockDb {
 	}
 }
 
-func (bu *blockUseCase) FetchBlock(ctx context.Context, blockNum *big.Int, stable bool) (*domain.BlockDb, error) {
+func (bu *blockUseCase) FetchBlock(ctx context.Context, blockNum *big.Int, stable bool) (*domain.BlockDb, types.Transactions, error) {
 	block, err := bu.rpcClient.BlockByNumber(context.Background(), blockNum)
 	if err != nil {
 		log.Err(err).Msg("fetch block fail in block by number")
-		return nil, err
+		return nil, nil, err
 	}
 
 	if block == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	log.Info().Msg("fetch block =" + block.Number().String())
 
-	return wrapBlockDb(block, stable), nil
+	return wrapBlockDb(block, stable), block.Transactions(), nil
 }

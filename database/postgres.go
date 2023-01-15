@@ -23,9 +23,11 @@ func (db *postgresDB) initialize(ctx context.Context, cfg dbConfig) {
 
 	// Connect to the PostgreSQL database.
 	var err error
+
+	//todo turn off log 
 	db.DB, err = gorm.Open(postgres.Open(dbSource), &gorm.Config{
-		//Logger: logger.Default.LogMode(logger.Info),
-		Logger: logger.Default.LogMode(logger.Silent),
+		Logger: logger.Default.LogMode(logger.Info),
+		//Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		panic(err)
@@ -36,8 +38,8 @@ func (db *postgresDB) initialize(ctx context.Context, cfg dbConfig) {
 // finalize finalizes the PostgreSQL database handle.
 func (db *postgresDB) finalize(ctx context.Context) {
 	// Close the PostgreSQL database handle.
-	postgreDB, _ := db.DB.DB()
-	if err := postgreDB.Close(); err != nil {
+	d, _ := db.DB.DB()
+	if err := d.Close(); err != nil {
 		log.Printf("Failed to close database handle: %v\n", err)
 	}
 }
