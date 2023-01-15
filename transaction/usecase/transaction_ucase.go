@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/rs/zerolog/log"
 	"github.com/ryanCool/ethService/domain"
 	"time"
 )
@@ -28,6 +29,30 @@ func (tu *transactionUseCase) GetTxHashesByBlockHash(ctx context.Context, blockH
 	return tu.repo.GetTxHashesByBlockHash(ctx, blockHash)
 }
 
+func (tu *transactionUseCase) saveReceipt(ctx context.Context, txHash common.Hash) error {
+	receipt, err := tu.rpcClient.TransactionReceipt(context.Background(), txHash)
+	if err != nil {
+		log.Err(err).Msg("save receipt fail when get receipt through rpc client")
+		return err
+	}
+
+	logs := []domain.TransactionLog{}
+	for _, l := range receipt.Logs {
+		tl := domain.TransactionLog{
+			TxHash:   txHash.String(),
+			LogIndex: int(l.Index),
+			LogData:  l.Data,
+		}
+		logs = append(logs, tl)
+	}
+	err = tu.repo.SaveReceiptAndLogs(ctx, txHash.String(), logs)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (tu *transactionUseCase) SaveTransaction(ctx context.Context, blockHash string, transaction *types.Transaction) error {
 	from, err := types.Sender(types.LatestSignerForChainID(transaction.ChainId()), transaction)
 	if err != nil {
@@ -47,6 +72,9 @@ func (tu *transactionUseCase) SaveTransaction(ctx context.Context, blockHash str
 		TxData:    transaction.Data(),
 		TxValue:   transaction.Value().String(),
 	})
+
+	go tu.saveReceipt(ctx, transaction.Hash())
+
 	if err != nil {
 		return err
 	}

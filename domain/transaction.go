@@ -16,14 +16,20 @@ type Transaction struct {
 	Logs      []TransactionLog `json:"logs" gorm:"-"`
 }
 
+type Receipt struct {
+	TxHash string
+}
+
 type TransactionLog struct {
-	Index int
-	Data  string
+	TxHash   string `json:"-"`
+	LogIndex int    `json:"index"`
+	LogData  []byte `json:"data"`
 }
 
 type TransactionRepository interface {
 	Create(ctx context.Context, transaction *Transaction) error
 	GetTxHashesByBlockHash(ctx context.Context, blockHash string) ([]string, error)
+	SaveReceiptAndLogs(ctx context.Context, txHash string, logs []TransactionLog) error
 }
 
 type TransactionUseCase interface {

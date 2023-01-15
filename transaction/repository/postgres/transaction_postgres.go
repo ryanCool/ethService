@@ -32,3 +32,18 @@ func (p *postgresTransactionRepository) GetTxHashesByBlockHash(ctx context.Conte
 
 	return hashes, nil
 }
+
+func (p *postgresTransactionRepository) SaveReceiptAndLogs(ctx context.Context, txHash string, logs []domain.TransactionLog) error {
+	return p.Db.Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Table("eth.receipts").Create(&domain.Receipt{TxHash: txHash}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Table("eth.transaction_logs").Create(&logs).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}

@@ -33,8 +33,8 @@ func init() {
 
 //Initialize init cron job to subscribe new block event through websocket endpoint
 func (bu *blockUseCase) Initialize(ctx context.Context) {
-	//go bu.subscribeNewBlock(ctx)
-	//go bu.scanToLatest(ctx)
+	go bu.subscribeNewBlock(ctx)
+	go bu.scanToLatest(ctx)
 }
 
 func NewBlockUseCase(a domain.BlockRepository, t domain.TransactionUseCase, timeout time.Duration, rpcClient *ethclient.Client, wsClient *ethclient.Client) domain.BlockUseCase {
