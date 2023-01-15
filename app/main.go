@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/ryanCool/ethService/helper"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,6 +37,7 @@ func main() {
 	database.Initialize(ctx)
 	defer database.Finalize(ctx)
 	engine := gin.New()
+	engine.Use(helper.CorsMiddleware())
 
 	db := database.GetDB()
 

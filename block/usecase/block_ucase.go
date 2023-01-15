@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/ryanCool/ethService/config"
 	"github.com/ryanCool/ethService/domain"
+	"gorm.io/gorm"
 	"math/big"
 	"time"
 )
@@ -32,8 +33,8 @@ func init() {
 
 //Initialize init cron job to subscribe new block event through websocket endpoint
 func (bu *blockUseCase) Initialize(ctx context.Context) {
-	go bu.subscribeNewBlock(ctx)
-	go bu.scanToLatest(ctx)
+	//go bu.subscribeNewBlock(ctx)
+	//go bu.scanToLatest(ctx)
 }
 
 func NewBlockUseCase(a domain.BlockRepository, t domain.TransactionUseCase, timeout time.Duration, rpcClient *ethclient.Client, wsClient *ethclient.Client) domain.BlockUseCase {
@@ -189,4 +190,27 @@ func (bu *blockUseCase) FetchBlock(ctx context.Context, blockNum *big.Int, stabl
 	log.Info().Msg("fetch block =" + block.Number().String())
 
 	return wrapBlockDb(block, stable), block.Transactions(), nil
+}
+
+func (bu *blockUseCase) GetByNumber(ctx context.Context, blockNum uint64) (*domain.Block, error) {
+	block, err := bu.repo.GetByNumber(ctx, blockNum)
+	if err == gorm.ErrRecordNotFound {
+		return nil, domain.ErrBlockNotExist
+	}
+
+	if err != nil {
+		log.Err(err).Msg("get block by block_num fail")
+		return nil, err
+	}
+
+	txs, err := bu.transactionUcase.GetTxHashesByBlockHash(ctx, block.BlockHash)
+	if err != nil {
+		log.Err(err).Msg("get tx hashes by block_hash fail")
+		return nil, err
+	}
+
+	return &domain.Block{
+		BlockDb:           *block,
+		TransactionHashes: txs,
+	}, nil
 }

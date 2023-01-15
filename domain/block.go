@@ -2,16 +2,11 @@ package domain
 
 import (
 	"context"
-	"fmt"
-)
-
-var (
-	ErrBlockNotExist = fmt.Errorf("block not exist")
 )
 
 type Block struct {
 	BlockDb
-	Transactions []string `json:"transactions" gorm:"-"`
+	TransactionHashes []string `json:"transactions" gorm:"-"`
 }
 
 type BlockDb struct {
@@ -26,9 +21,11 @@ type BlockRepository interface {
 	List(ctx context.Context, limit int) ([]BlockDb, error)
 	Create(ctx context.Context, block *BlockDb) error
 	SetStable(ctx context.Context, blockNum uint64, stable bool) error
+	GetByNumber(ctx context.Context, blockNum uint64) (*BlockDb, error)
 }
 
 type BlockUseCase interface {
 	List(ctx context.Context, limit int) ([]BlockDb, error)
+	GetByNumber(ctx context.Context, blockNum uint64) (*Block, error)
 	Initialize(ctx context.Context)
 }

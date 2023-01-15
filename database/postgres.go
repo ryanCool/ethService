@@ -24,7 +24,7 @@ func (db *postgresDB) initialize(ctx context.Context, cfg dbConfig) {
 	// Connect to the PostgreSQL database.
 	var err error
 
-	//todo turn off log 
+	//todo turn off log
 	db.DB, err = gorm.Open(postgres.Open(dbSource), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 		//Logger: logger.Default.LogMode(logger.Silent),

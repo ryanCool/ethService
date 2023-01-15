@@ -24,6 +24,10 @@ func NewTransactionUseCase(a domain.TransactionRepository, timeout time.Duration
 	}
 }
 
+func (tu *transactionUseCase) GetTxHashesByBlockHash(ctx context.Context, blockHash string) ([]string, error) {
+	return tu.repo.GetTxHashesByBlockHash(ctx, blockHash)
+}
+
 func (tu *transactionUseCase) SaveTransaction(ctx context.Context, blockHash string, transaction *types.Transaction) error {
 	from, err := types.Sender(types.LatestSignerForChainID(transaction.ChainId()), transaction)
 	if err != nil {

@@ -23,8 +23,10 @@ type TransactionLog struct {
 
 type TransactionRepository interface {
 	Create(ctx context.Context, transaction *Transaction) error
+	GetTxHashesByBlockHash(ctx context.Context, blockHash string) ([]string, error)
 }
 
 type TransactionUseCase interface {
+	GetTxHashesByBlockHash(ctx context.Context, blockHash string) ([]string, error)
 	SaveTransaction(ctx context.Context, blockHash string, transaction *types.Transaction) error
 }
