@@ -168,7 +168,7 @@ func wrapBlockDb(block *types.Block, stable bool) *domain.BlockDb {
 func (bu *blockUseCase) FetchBlock(ctx context.Context, blockNum *big.Int, stable bool) (*domain.BlockDb, error) {
 	block, err := bu.rpcClient.BlockByNumber(context.Background(), blockNum)
 	if err != nil {
-		log.Print(err)
+		log.Err(err).Msg("fetch block fail in block by number")
 		return nil, err
 	}
 
