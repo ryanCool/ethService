@@ -91,6 +91,7 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 			}
 
 			for _, transaction := range transactions {
+				//todo use go routine
 				err = bu.transactionUcase.Save(ctx, block.BlockHash, transaction)
 				if err != nil {
 					log.Err(err).Msg("save transaction fail when sync to latest block")
