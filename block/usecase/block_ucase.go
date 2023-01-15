@@ -91,7 +91,10 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 			}
 
 			for _, transaction := range transactions {
-				go bu.transactionUcase.SaveTransaction(ctx, block.BlockHash, transaction)
+				err = bu.transactionUcase.Save(ctx, block.BlockHash, transaction)
+				if err != nil {
+					log.Err(err).Msg("save transaction fail when sync to latest block")
+				}
 			}
 
 			//it may cause some duplicate key err, but i don't think it would be a issue
@@ -109,9 +112,14 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 }
 
 func (bu *blockUseCase) setNewBlock(ctx context.Context, blockHash common.Hash) {
-	block, err := bu.wsClient.BlockByHash(context.Background(), blockHash)
+	block, err := bu.rpcClient.BlockByHash(context.Background(), blockHash)
 	if err != nil {
 		log.Error().Err(err)
+		return
+	}
+
+	if block == nil {
+		return
 	}
 
 	//store new block info
@@ -132,7 +140,7 @@ func (bu *blockUseCase) setOldBlock(ctx context.Context, oldBlockNum uint64) {
 		}
 
 		for _, transaction := range transactions {
-			go bu.transactionUcase.SaveTransaction(ctx, b.BlockHash, transaction)
+			go bu.transactionUcase.Save(ctx, b.BlockHash, transaction)
 		}
 
 		err = bu.newBlock(ctx, b)

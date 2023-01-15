@@ -13,6 +13,7 @@ var (
 )
 
 func init() {
+	// todo use multiple endpoint to avoid 429 too many request
 	endpointURL = config.GetString("JSON_RPC_ENDPOINT")
 	wsEndpointURL = config.GetString("WS_ENDPOINT")
 }

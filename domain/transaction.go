@@ -30,9 +30,12 @@ type TransactionRepository interface {
 	Create(ctx context.Context, transaction *Transaction) error
 	GetTxHashesByBlockHash(ctx context.Context, blockHash string) ([]string, error)
 	SaveReceiptAndLogs(ctx context.Context, txHash string, logs []TransactionLog) error
+	GetLogsByTxHash(ctx context.Context, txHash string) ([]TransactionLog, error)
+	GetByTxHash(ctx context.Context, txHash string) (*Transaction, error)
 }
 
 type TransactionUseCase interface {
 	GetTxHashesByBlockHash(ctx context.Context, blockHash string) ([]string, error)
-	SaveTransaction(ctx context.Context, blockHash string, transaction *types.Transaction) error
+	Save(ctx context.Context, blockHash string, transaction *types.Transaction) error
+	GetByTxHash(ctx context.Context, txHash string) (*Transaction, error)
 }

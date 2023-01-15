@@ -47,3 +47,21 @@ func (p *postgresTransactionRepository) SaveReceiptAndLogs(ctx context.Context, 
 		return nil
 	})
 }
+
+func (p *postgresTransactionRepository) GetLogsByTxHash(ctx context.Context, txHash string) ([]domain.TransactionLog, error) {
+	var res []domain.TransactionLog
+	if err := p.Db.Table("eth.transaction_logs").Where("tx_hash = ?", txHash).Find(&res).Error; err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (p *postgresTransactionRepository) GetByTxHash(ctx context.Context, txHash string) (*domain.Transaction, error) {
+	var res *domain.Transaction
+	if err := p.Db.Table("eth.transactions").Where("tx_hash = ?", txHash).First(&res).Error; err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

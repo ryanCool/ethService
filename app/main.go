@@ -19,6 +19,7 @@ import (
 	"github.com/ryanCool/ethService/config"
 	"github.com/ryanCool/ethService/database"
 	"github.com/ryanCool/ethService/ethclient"
+	transactionHttp "github.com/ryanCool/ethService/transaction/delivery/http"
 	transactionRepo "github.com/ryanCool/ethService/transaction/repository/postgres"
 	transactionUcase "github.com/ryanCool/ethService/transaction/usecase"
 )
@@ -44,6 +45,7 @@ func main() {
 	//init transaction service
 	tp := transactionRepo.NewPostgresTransactionRepository(db)
 	tu := transactionUcase.NewTransactionUseCase(tp, timeoutContext, ethclient.RpcClient)
+	transactionHttp.NewTransactionHandler(engine, tu)
 
 	//init block service
 	bp := blockRepo.NewPostgresBlockRepository(db)

@@ -21,6 +21,8 @@ services:
       SYNC_BLOCK_FROM_N: 16412541
       SCAN_WORK_NUM: 3
     restart: 'always'
+    ports:
+      - "8080:8080"
     depends_on:
       - 'db'
   db:

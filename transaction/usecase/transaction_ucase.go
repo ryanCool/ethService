@@ -25,6 +25,21 @@ func NewTransactionUseCase(a domain.TransactionRepository, timeout time.Duration
 	}
 }
 
+func (tu *transactionUseCase) GetByTxHash(ctx context.Context, txHash string) (*domain.Transaction, error) {
+	l, err := tu.repo.GetByTxHash(ctx, txHash)
+	if err != nil {
+		return nil, err
+	}
+
+	logs, err := tu.repo.GetLogsByTxHash(ctx, txHash)
+	if err != nil {
+		return nil, err
+	}
+	l.Logs = logs
+
+	return l, nil
+}
+
 func (tu *transactionUseCase) GetTxHashesByBlockHash(ctx context.Context, blockHash string) ([]string, error) {
 	return tu.repo.GetTxHashesByBlockHash(ctx, blockHash)
 }
@@ -53,7 +68,7 @@ func (tu *transactionUseCase) saveReceipt(ctx context.Context, txHash common.Has
 	return nil
 }
 
-func (tu *transactionUseCase) SaveTransaction(ctx context.Context, blockHash string, transaction *types.Transaction) error {
+func (tu *transactionUseCase) Save(ctx context.Context, blockHash string, transaction *types.Transaction) error {
 	from, err := types.Sender(types.LatestSignerForChainID(transaction.ChainId()), transaction)
 	if err != nil {
 		return err
@@ -72,8 +87,11 @@ func (tu *transactionUseCase) SaveTransaction(ctx context.Context, blockHash str
 		TxData:    transaction.Data(),
 		TxValue:   transaction.Value().String(),
 	})
-
-	go tu.saveReceipt(ctx, transaction.Hash())
+	if err != nil {
+		return err
+	}
+	
+	err = tu.saveReceipt(ctx, transaction.Hash())
 
 	if err != nil {
 		return err
