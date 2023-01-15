@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ryanCool/ethService/config"
@@ -19,19 +21,18 @@ type blockUseCase struct {
 }
 
 var syncFromNBlock *big.Int
-var confirmedNum int
+var confirmedNum, scanWorkerNum int
 
 func init() {
 	confirmedNum = config.GetInt("CONFIRMED_BLOCK_NUM")
-
+	scanWorkerNum = config.GetInt("SCAN_WORK_NUM")
 	syncFromNBlock = config.GetBigInt("SYNC_BLOCK_FROM_N")
 }
 
 //Initialize init cron job to subscribe new block event through websocket endpoint
 func (bu *blockUseCase) Initialize(ctx context.Context) {
-
 	go bu.subscribeNewBlock(ctx)
-	//go bu.scanToLatest(ctx)
+	go bu.scanToLatest(ctx)
 }
 
 func NewBlockUseCase(a domain.BlockRepository, timeout time.Duration, rpcClient *ethclient.Client, wsClient *ethclient.Client) domain.BlockUseCase {
@@ -48,7 +49,7 @@ func (bu *blockUseCase) newBlock(ctx context.Context, block *domain.BlockDb) err
 	return bu.repo.Create(ctx, block)
 }
 
-//NewBlock store block to db
+//setBlockStable set old block to stable status
 func (bu *blockUseCase) setBlockStable(ctx context.Context, blockNum uint64, stable bool) error {
 	return bu.repo.SetStable(ctx, blockNum, stable)
 }
@@ -60,35 +61,75 @@ func (bu *blockUseCase) List(ctx context.Context, limit int) ([]domain.BlockDb, 
 
 //ScanToLatest scan blocks from n to latest , and store to db
 func (bu *blockUseCase) scanToLatest(ctx context.Context) {
-
 	header, err := bu.rpcClient.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	latestNum := header.Number.Uint64()
-	currentBlockNum := syncFromNBlock
+	targetBlockNum := syncFromNBlock
 
-	for {
-		stable := true
-		if currentBlockNum.Uint64() > latestNum-uint64(confirmedNum) {
-			stable = false
-		}
+	//use buffer channel to implement a worker pool with config number
+	c := make(chan bool, scanWorkerNum)
+	for targetBlockNum.Uint64() <= latestNum {
+		c <- true
+		go func(latestNum uint64, targetBlockNum uint64) {
+			stable := true
+			if targetBlockNum > latestNum-uint64(confirmedNum) {
+				stable = false
+			}
 
-		block, err := bu.FetchBlock(ctx, currentBlockNum, stable)
-		if err != nil {
-			log.Println(err)
-		}
-		if block == nil { //no more block
-			break
-		}
+			block, err := bu.FetchBlock(ctx, big.NewInt(int64(targetBlockNum)), stable)
+			if err != nil {
+				log.Println(err)
+			}
+			//no more block
+			if block == nil {
+				return
+			}
 
-		err = bu.newBlock(ctx, block)
-		if err != nil {
-			log.Println(err)
-		}
-		currentBlockNum = currentBlockNum.Add(currentBlockNum, big.NewInt(1))
+			//it may cause some duplicate key err, but i don't think it would be a issue
+			err = bu.newBlock(ctx, block)
+			if err != nil {
+				log.Println(err)
+			}
+			//job done , and release worker
+			<-c
+		}(latestNum, targetBlockNum.Uint64())
+		targetBlockNum = targetBlockNum.Add(targetBlockNum, big.NewInt(1))
 	}
 
+}
+
+func (bu *blockUseCase) setNewBlock(ctx context.Context, blockHash common.Hash) {
+	block, err := bu.wsClient.BlockByHash(context.Background(), blockHash)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//store new block info
+	if err := bu.newBlock(ctx, wrapBlockDb(block, false)); err != nil {
+		log.Fatal(err)
+	}
+}
+
+//setOldBlock set old block to stable
+func (bu *blockUseCase) setOldBlock(ctx context.Context, oldBlockNum uint64) {
+	err := bu.setBlockStable(ctx, oldBlockNum, true)
+	if err != nil && err != domain.ErrBlockNotExist {
+		log.Fatal(err)
+	} else if err == domain.ErrBlockNotExist {
+		b, err := bu.FetchBlock(ctx, big.NewInt(int64(oldBlockNum)), true)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = bu.newBlock(ctx, b)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	}
+	return
 }
 
 func (bu *blockUseCase) subscribeNewBlock(ctx context.Context) {
@@ -103,34 +144,10 @@ func (bu *blockUseCase) subscribeNewBlock(ctx context.Context) {
 		select {
 		case err := <-sub.Err():
 			log.Fatal(err)
-		case header := <-headers:
-			block, err := bu.wsClient.BlockByHash(context.Background(), header.Hash())
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			if err := bu.newBlock(ctx, wrapBlockDb(block, false)); err != nil {
-				log.Fatal(err)
-			}
-
-			oldBlockNum := block.Number().Uint64() - uint64(confirmedNum)
-			//set old block to stable
-			err = bu.setBlockStable(ctx, oldBlockNum, true)
-			if err != nil && err != domain.ErrBlockNotExist {
-				log.Fatal(err)
-			} else if err == domain.ErrBlockNotExist {
-				b, err := bu.FetchBlock(ctx, big.NewInt(int64(oldBlockNum)), true)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				err = bu.newBlock(ctx, b)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-			}
-
+		case header := <-headers: //get new block event
+			fmt.Println("get new block:", header.Number)
+			go bu.setNewBlock(ctx, header.Hash())
+			go bu.setOldBlock(ctx, header.Number.Uint64()-uint64(confirmedNum))
 		case <-ctx.Done():
 			log.Println("break subscribe loop")
 			return
