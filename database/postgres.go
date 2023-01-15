@@ -3,8 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm/logger"
-	"log"
 
 	"gorm.io/gorm"
 	// PostgreSQL driver.

@@ -3,8 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"github.com/ryanCool/ethService/config"
-	"log"
 	"runtime/debug"
 
 	"gorm.io/gorm"
@@ -96,7 +96,7 @@ func Transaction(ctx context.Context, db *gorm.DB, txFunc DBTransactionFunc) (er
 
 	tx := db.Begin()
 	if err = tx.Error; err != nil {
-		log.Println("Failed to begin transaction: %v", err)
+		log.Error().Err(err).Msg("Failed to begin transaction")
 		return err
 	}
 
@@ -111,26 +111,26 @@ func Transaction(ctx context.Context, db *gorm.DB, txFunc DBTransactionFunc) (er
 
 			// Record the stack trace to logging service, or if we cannot
 			// find a logging from this request, use the static logging.
-			log.Println(message)
+			log.Print(message)
 		}
 
 		// Perform rollback if panic or if error is encountered.
 		if recovered != nil || err != nil {
 			if rerr := tx.Rollback().Error; rerr != nil {
-				log.Printf("Failed to rollback transaction: %v\n", rerr)
+				log.Error().Err(err).Msg("Failed to rollback transaction")
 			}
 		}
 	}()
 
 	// Execute transaction.
 	if err = txFunc(ctx, tx); err != nil {
-		log.Println("Failed to execute transaction: %v", err)
+		log.Error().Err(err).Msg("Failed to execute transaction")
 		return err
 	}
 
 	// Commit transaction.
 	if err = tx.Commit().Error; err != nil {
-		log.Println("Failed to commit transaction: %v", err)
+		log.Error().Err(err).Msg("Failed to commit transaction")
 		return err
 	}
 

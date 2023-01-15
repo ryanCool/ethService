@@ -6,9 +6,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/rs/zerolog/log"
 	"github.com/ryanCool/ethService/config"
 	"github.com/ryanCool/ethService/domain"
-	"log"
 	"math/big"
 	"time"
 )
@@ -63,7 +63,7 @@ func (bu *blockUseCase) List(ctx context.Context, limit int) ([]domain.BlockDb, 
 func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 	header, err := bu.rpcClient.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err)
 	}
 	latestNum := header.Number.Uint64()
 	targetBlockNum := syncFromNBlock
@@ -80,7 +80,7 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 
 			block, err := bu.FetchBlock(ctx, big.NewInt(int64(targetBlockNum)), stable)
 			if err != nil {
-				log.Println(err)
+				log.Err(err).Msg("Fetch block fail when sync to latest block")
 			}
 			//no more block
 			if block == nil {
@@ -90,7 +90,7 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 			//it may cause some duplicate key err, but i don't think it would be a issue
 			err = bu.newBlock(ctx, block)
 			if err != nil {
-				log.Println(err)
+				log.Err(err).Msg("New block fail when sync to latest block")
 			}
 			//job done , and release worker
 			<-c
@@ -103,12 +103,12 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 func (bu *blockUseCase) setNewBlock(ctx context.Context, blockHash common.Hash) {
 	block, err := bu.wsClient.BlockByHash(context.Background(), blockHash)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err)
 	}
 
 	//store new block info
 	if err := bu.newBlock(ctx, wrapBlockDb(block, false)); err != nil {
-		log.Fatal(err)
+		log.Error().Err(err)
 	}
 }
 
@@ -116,16 +116,16 @@ func (bu *blockUseCase) setNewBlock(ctx context.Context, blockHash common.Hash) 
 func (bu *blockUseCase) setOldBlock(ctx context.Context, oldBlockNum uint64) {
 	err := bu.setBlockStable(ctx, oldBlockNum, true)
 	if err != nil && err != domain.ErrBlockNotExist {
-		log.Fatal(err)
+		log.Error().Err(err)
 	} else if err == domain.ErrBlockNotExist {
 		b, err := bu.FetchBlock(ctx, big.NewInt(int64(oldBlockNum)), true)
 		if err != nil {
-			log.Fatal(err)
+			log.Error().Err(err)
 		}
 
 		err = bu.newBlock(ctx, b)
 		if err != nil {
-			log.Fatal(err)
+			log.Error().Err(err)
 		}
 
 	}
@@ -137,19 +137,19 @@ func (bu *blockUseCase) subscribeNewBlock(ctx context.Context) {
 
 	sub, err := bu.wsClient.SubscribeNewHead(ctx, headers)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err)
 	}
 
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Fatal(err)
+			log.Error().Err(err)
 		case header := <-headers: //get new block event
 			fmt.Println("get new block:", header.Number)
 			go bu.setNewBlock(ctx, header.Hash())
 			go bu.setOldBlock(ctx, header.Number.Uint64()-uint64(confirmedNum))
 		case <-ctx.Done():
-			log.Println("break subscribe loop")
+			log.Print("break subscribe loop")
 			return
 		}
 	}
@@ -168,14 +168,14 @@ func wrapBlockDb(block *types.Block, stable bool) *domain.BlockDb {
 func (bu *blockUseCase) FetchBlock(ctx context.Context, blockNum *big.Int, stable bool) (*domain.BlockDb, error) {
 	block, err := bu.rpcClient.BlockByNumber(context.Background(), blockNum)
 	if err != nil {
-		log.Println(err)
+		log.Print(err)
 		return nil, err
 	}
 
 	if block == nil {
 		return nil, nil
 	}
-	log.Println("fetch block =", block.NumberU64())
+	log.Info().Msg("fetch block =" + block.Number().String())
 
 	return wrapBlockDb(block, stable), nil
 }

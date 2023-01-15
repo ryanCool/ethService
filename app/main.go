@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,6 +21,9 @@ import (
 )
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
 	// Create root context.
 	ctx, cancel := context.WithCancel(context.Background())
 	timeoutContext := time.Duration(config.GetInt("CONTEXT_TIMEOUT_SECS")) * time.Second
@@ -59,6 +63,6 @@ func main() {
 	cancel()
 	server.Close()
 
-	log.Println("Shutdown Server ...")
+	log.Print("Shutdown Server ...")
 
 }
