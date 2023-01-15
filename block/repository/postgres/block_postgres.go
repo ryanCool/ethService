@@ -26,3 +26,16 @@ func (p *postgresBlockRepository) List(ctx context.Context, limit int) ([]domain
 	}
 	return res, nil
 }
+
+func (p *postgresBlockRepository) SetStable(ctx context.Context, blockNum uint64, stable bool) error {
+	d := p.Db.Table("eth.blocks").Where("block_num = ?", blockNum).Update("stable", stable)
+	if d.Error != nil {
+		return d.Error
+	}
+
+	if d.RowsAffected != 1 {
+		return domain.ErrBlockNotExist
+	}
+
+	return nil
+}

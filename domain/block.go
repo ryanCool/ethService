@@ -2,6 +2,11 @@ package domain
 
 import (
 	"context"
+	"fmt"
+)
+
+var (
+	ErrBlockNotExist = fmt.Errorf("block not exist")
 )
 
 type Block struct {
@@ -14,12 +19,13 @@ type BlockDb struct {
 	BlockHash  string `json:"block_hash"`
 	BlockTime  uint64 `json:"block_time"`
 	ParentHash string `json:"parent_hash"`
-	Stable     bool   `json:"-"`
+	Stable     bool   `json:"stable"`
 }
 
 type BlockRepository interface {
 	List(ctx context.Context, limit int) ([]BlockDb, error)
 	Create(ctx context.Context, block *BlockDb) error
+	SetStable(ctx context.Context, blockNum uint64, stable bool) error
 }
 
 type BlockUseCase interface {
