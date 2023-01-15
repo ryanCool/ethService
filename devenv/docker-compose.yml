@@ -15,6 +15,10 @@ services:
       SERVER_PORT: 8080
       CONTEXT_TIMEOUT_SECS: 10
       GIN_MODE: debug
+      JSON_RPC_ENDPOINT: https://mainnet.infura.io/v3/49c81384a9ed44f1bcdb04c5efbc776f
+      WS_ENDPOINT: wss://mainnet.infura.io/ws/v3/49c81384a9ed44f1bcdb04c5efbc776f
+      CONFIRMED_BLOCK_NUM: 20
+      SYNC_BLOCK_FROM_N: 0
     restart: 'always'
     depends_on:
       - 'db'

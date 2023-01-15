@@ -1,9 +1,9 @@
 package config
 
 import (
+	"math/big"
 	"os"
 	"strconv"
-	"time"
 )
 
 // GetString returns a setting in string.
@@ -33,6 +33,17 @@ func GetInt(key string) int {
 	return val
 }
 
+// GetBigInt returns a setting in bigInt.
+func GetBigInt(key string) *big.Int {
+	str := GetString(key)
+	n := new(big.Int)
+	n, ok := n.SetString(str, 10)
+	if !ok {
+		panic("config invalid" + key)
+	}
+	return n
+}
+
 // GetUint returns a setting in unsigned integer.
 func GetUint(key string) uint {
 	val := uint(GetUint64(key))
@@ -60,11 +71,5 @@ func GetUint64(key string) uint64 {
 		panic(err)
 	}
 
-	return val
-}
-
-// GetMilliseconds returns a setting in time.Duration.
-func GetMilliseconds(key string) time.Duration {
-	val := time.Duration(GetUint(key)) * time.Millisecond
 	return val
 }

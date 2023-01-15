@@ -10,19 +10,19 @@ type Block struct {
 }
 
 type BlockDb struct {
-	BlockNum   int    `json:"block_num"`
+	BlockNum   uint64 `json:"block_num"`
 	BlockHash  string `json:"block_hash"`
-	BlockTime  int    `json:"block_time"`
+	BlockTime  uint64 `json:"block_time"`
 	ParentHash string `json:"parent_hash"`
 	Stable     bool   `json:"-"`
 }
 
 type BlockRepository interface {
 	List(ctx context.Context, limit int) ([]BlockDb, error)
-	Create(ctx context.Context, block *Block) error
+	Create(ctx context.Context, block *BlockDb) error
 }
 
 type BlockUseCase interface {
 	List(ctx context.Context, limit int) ([]BlockDb, error)
-	NewBlock(ctx context.Context, block *Block) error
+	Initialize(ctx context.Context)
 }

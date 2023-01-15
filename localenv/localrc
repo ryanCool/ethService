@@ -8,3 +8,7 @@ export SERVER_HOST=0.0.0.0
 export SERVER_PORT=8080
 export CONTEXT_TIMEOUT_SECS=10
 export GIN_MODE=debug
+export JSON_RPC_ENDPOINT=https://mainnet.infura.io/v3/49c81384a9ed44f1bcdb04c5efbc776f
+export WS_ENDPOINT=wss://mainnet.infura.io/ws/v3/49c81384a9ed44f1bcdb04c5efbc776f
+export SYNC_BLOCK_FROM_N=16410041
+export CONFIRMED_BLOCK_NUM=20

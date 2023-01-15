@@ -3,10 +3,10 @@ package database
 import (
 	"context"
 	"fmt"
+	"gorm.io/gorm/logger"
+	"log"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-
 	// PostgreSQL driver.
 	"gorm.io/driver/postgres"
 	_ "gorm.io/driver/postgres"
@@ -24,7 +24,8 @@ func (db *postgresDB) initialize(ctx context.Context, cfg dbConfig) {
 	// Connect to the PostgreSQL database.
 	var err error
 	db.DB, err = gorm.Open(postgres.Open(dbSource), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		//Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		panic(err)
@@ -37,7 +38,7 @@ func (db *postgresDB) finalize(ctx context.Context) {
 	// Close the PostgreSQL database handle.
 	postgreDB, _ := db.DB.DB()
 	if err := postgreDB.Close(); err != nil {
-		fmt.Println("Failed to close database handle: %v", err)
+		log.Printf("Failed to close database handle: %v\n", err)
 	}
 }
 

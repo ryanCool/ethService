@@ -15,7 +15,7 @@ func NewPostgresBlockRepository(db *gorm.DB) domain.BlockRepository {
 	return &postgresBlockRepository{db}
 }
 
-func (p *postgresBlockRepository) Create(ctx context.Context, block *domain.Block) error {
+func (p *postgresBlockRepository) Create(ctx context.Context, block *domain.BlockDb) error {
 	return p.Db.Table("eth.blocks").Create(&block).Error
 }
 

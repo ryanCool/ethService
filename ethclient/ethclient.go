@@ -2,13 +2,35 @@ package ethclient
 
 import (
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ryanCool/ethService/config"
 )
 
-func New() *ethclient.Client {
-	client, err := ethclient.Dial("https://data-seed-prebsc-2-s3.binance.org:8545/")
+var endpointURL, wsEndpointURL string
+var confirmedNum int
+var (
+	WsClient  *ethclient.Client
+	RpcClient *ethclient.Client
+)
+
+func init() {
+	endpointURL = config.GetString("JSON_RPC_ENDPOINT")
+	wsEndpointURL = config.GetString("WS_ENDPOINT")
+}
+
+func Initialize() {
+	var err error
+	RpcClient, err = ethclient.Dial(endpointURL)
 	if err != nil {
 		panic(err)
 	}
 
-	return client
+	WsClient, err = ethclient.Dial(wsEndpointURL)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func Finalize() {
+	RpcClient.Close()
+	WsClient.Close()
 }
