@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type Transaction struct {
@@ -35,7 +34,8 @@ type TransactionRepository interface {
 }
 
 type TransactionUseCase interface {
+	Create(ctx context.Context, transaction *Transaction) error
 	GetTxHashesByBlockHash(ctx context.Context, blockHash string) ([]string, error)
-	Save(ctx context.Context, blockHash string, transaction *types.Transaction) error
+	SaveReceiptAndLogs(ctx context.Context, txHash string, logs []TransactionLog) error
 	GetByTxHash(ctx context.Context, txHash string) (*Transaction, error)
 }

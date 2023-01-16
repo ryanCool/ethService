@@ -44,12 +44,12 @@ func main() {
 
 	//init transaction service
 	tp := transactionRepo.NewPostgresTransactionRepository(db)
-	tu := transactionUcase.NewTransactionUseCase(tp, timeoutContext, ethclient.RpcClient)
+	tu := transactionUcase.NewTransactionUseCase(tp, timeoutContext)
 	transactionHttp.NewTransactionHandler(engine, tu)
 
 	//init block service
 	bp := blockRepo.NewPostgresBlockRepository(db)
-	bu := blockUcase.NewBlockUseCase(bp, tu, timeoutContext, ethclient.RpcClient, ethclient.WsClient)
+	bu := blockUcase.NewBlockUseCase(bp, tu, timeoutContext)
 	blockHttp.NewBlockHandler(engine, bu)
 
 	//create http server to serve rest api

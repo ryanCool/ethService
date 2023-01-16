@@ -26,7 +26,9 @@ type BlockRepository interface {
 }
 
 type BlockUseCase interface {
+	Create(ctx context.Context, block *BlockDb) error
+	SetStable(ctx context.Context, blockNum uint64, stable bool) error
+	DeleteByNum(ctx context.Context, blockNum uint64) error
 	List(ctx context.Context, limit int) ([]BlockDb, error)
 	GetByNumber(ctx context.Context, blockNum uint64) (*Block, error)
-	Initialize(ctx context.Context)
 }
