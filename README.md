@@ -6,7 +6,7 @@
  - Api service provide api to query blocks info and transaction info.
 
 ## run
-This command will run two containers locally , database and service server.
+This command will run three containers locally , database ,eth scan service, api server.
 ```
 make run 
 ```
