@@ -32,7 +32,7 @@ func init() {
 
 //Initialize init cron job to subscribe new block event through websocket endpoint
 func (bu *blockUseCase) Initialize(ctx context.Context) {
-	go bu.subscribeNewBlock(ctx)
+	//go bu.subscribeNewBlock(ctx)
 	go bu.scanToLatest(ctx)
 }
 
@@ -91,6 +91,25 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 }
 
 func (bu *blockUseCase) saveBlock(ctx context.Context, blockNum uint64, stable bool) error {
+	//check exist block in db
+	b, err := bu.repo.GetByNumber(ctx, blockNum)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		log.Err(err).Msg("get block from repo fail")
+		return err
+	}
+
+	//block exist , and is not stable block  . Don't need to replace
+	if b != nil && !stable {
+		return nil
+	} else if b != nil && stable { //exist old , we should replace by new fetch one . Delete first
+		err = bu.repo.DeleteByNum(ctx, blockNum)
+		if err != nil {
+			log.Err(err).Msg("delete block by num fail")
+			return err
+		}
+	}
+
+	//block not exist in db
 	block, transactions, err := bu.FetchBlock(ctx, big.NewInt(int64(blockNum)), stable)
 	if err != nil {
 		log.Err(err).Msg("Fetch block fail when sync to latest block")
@@ -115,20 +134,39 @@ func (bu *blockUseCase) saveBlock(ctx context.Context, blockNum uint64, stable b
 }
 
 func (bu *blockUseCase) setNewBlock(ctx context.Context, blockNum uint64) {
-	bu.saveBlock(ctx, blockNum, false)
+	err := bu.saveBlock(ctx, blockNum, false)
+	if err != nil {
+		log.Err(err).Msg("set new block fail - saveBlock")
+	}
 }
 
 //setOldBlock set old block to stable
 func (bu *blockUseCase) setOldBlock(ctx context.Context, oldBlockNum uint64) {
-	err := bu.setBlockStable(ctx, oldBlockNum, true)
-	if err != nil && err != domain.ErrBlockNotExist {
-		log.Error().Err(err).Msg("set block stable fail")
-	} else if err == domain.ErrBlockNotExist {
+	b, err := bu.rpcClient.BlockByNumber(ctx, big.NewInt(int64(oldBlockNum)))
+	if err != nil {
+		log.Error().Err(err).Msg("set block stable fail - Get by number")
+	}
+
+	oldBlock, err := bu.GetByNumber(ctx, oldBlockNum)
+	if err != nil {
+		log.Error().Err(err).Msg("set block stable fail - Get by number")
+	}
+
+	//replace if old one is unstable by checking block hash
+	//if block not exist or hash not equal , new one
+	if oldBlock == nil || oldBlock.BlockHash != b.Hash().String() {
 		err = bu.saveBlock(ctx, oldBlockNum, true)
 		if err != nil {
 			log.Error().Err(err).Msg("save block fail in set old block")
 		}
+		return
 	}
+
+	err = bu.setBlockStable(ctx, oldBlockNum, true)
+	if err != nil {
+		log.Error().Err(err).Msg("set block stable fail")
+	}
+
 	return
 }
 
