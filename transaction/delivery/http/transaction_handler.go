@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ryanCool/ethService/domain"
 	"github.com/ryanCool/ethService/helper"
@@ -32,8 +31,7 @@ func (a *TransactionHandler) GetTransaction(ctx *gin.Context) {
 	}
 
 	if err != nil {
-		fmt.Println(err)
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		helper.RespondWithError(ctx, http.StatusInternalServerError, err)
 		return
 	}
 

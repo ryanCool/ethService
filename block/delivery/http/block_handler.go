@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ryanCool/ethService/domain"
 	"github.com/ryanCool/ethService/helper"
@@ -40,7 +39,7 @@ func (a *BlockHandler) ListBlock(ctx *gin.Context) {
 
 	results, err := a.BUseCase.List(ctx, iLimit)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		helper.RespondWithError(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -51,8 +50,7 @@ func (a *BlockHandler) GetBlock(ctx *gin.Context) {
 	blockNum := ctx.Param("id")
 	iBlockNum, err := strconv.Atoi(blockNum)
 	if err != nil {
-		fmt.Println(err)
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		helper.RespondWithError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
@@ -62,8 +60,7 @@ func (a *BlockHandler) GetBlock(ctx *gin.Context) {
 	}
 
 	if err != nil {
-		fmt.Println(err)
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		helper.RespondWithError(ctx, http.StatusInternalServerError, err)
 		return
 	}
 

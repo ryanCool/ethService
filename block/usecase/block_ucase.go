@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/rs/zerolog/log"
@@ -22,17 +21,18 @@ type blockUseCase struct {
 }
 
 var syncFromNBlock *big.Int
-var confirmedNum, scanWorkerNum int
+var confirmedNum, scanWorkerNum, writeTransactionWorkerNum int
 
 func init() {
 	confirmedNum = config.GetInt("CONFIRMED_BLOCK_NUM")
 	scanWorkerNum = config.GetInt("SCAN_WORK_NUM")
 	syncFromNBlock = config.GetBigInt("SYNC_BLOCK_FROM_N")
+	writeTransactionWorkerNum = config.GetInt("WRITE_TRANSACTION_WORK_NUM")
 }
 
 //Initialize init cron job to subscribe new block event through websocket endpoint
 func (bu *blockUseCase) Initialize(ctx context.Context) {
-	go bu.subscribeNewBlock(ctx)
+	//go bu.subscribeNewBlock(ctx)
 	go bu.scanToLatest(ctx)
 }
 
@@ -122,13 +122,16 @@ func (bu *blockUseCase) saveBlock(ctx context.Context, blockNum uint64, stable b
 		return err
 	}
 
+	c := make(chan bool, writeTransactionWorkerNum)
 	for _, transaction := range transactions {
-		//todo use go routine
-		err = bu.transactionUcase.Save(ctx, block.BlockHash, transaction)
-		if err != nil {
-			log.Err(err).Msg("save transaction fail when sync to latest block")
-			return err
-		}
+		c <- true
+		go func() {
+			err = bu.transactionUcase.Save(ctx, block.BlockHash, transaction)
+			if err != nil {
+				log.Err(err).Msg("save transaction fail when sync to latest block")
+			}
+		}()
+		<-c
 	}
 	return nil
 }
@@ -182,7 +185,7 @@ func (bu *blockUseCase) subscribeNewBlock(ctx context.Context) {
 		case err := <-sub.Err():
 			log.Error().Err(err).Msg("receive subsc")
 		case header := <-headers: //get new block event
-			fmt.Println("get new block:", header.Number)
+			log.Info().Uint64("block_num", header.Number.Uint64()).Msg("get new block")
 			go bu.setNewBlock(ctx, header.Number.Uint64())
 			go bu.setOldBlock(ctx, header.Number.Uint64()-uint64(confirmedNum))
 		case <-ctx.Done():
