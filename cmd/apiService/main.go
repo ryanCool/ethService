@@ -18,7 +18,6 @@ import (
 	blockUcase "github.com/ryanCool/ethService/block/usecase"
 	"github.com/ryanCool/ethService/config"
 	"github.com/ryanCool/ethService/database"
-	"github.com/ryanCool/ethService/ethclient"
 	transactionHttp "github.com/ryanCool/ethService/transaction/delivery/http"
 	transactionRepo "github.com/ryanCool/ethService/transaction/repository/postgres"
 	transactionUcase "github.com/ryanCool/ethService/transaction/usecase"
@@ -31,10 +30,7 @@ func main() {
 	// Create root context.
 	ctx, cancel := context.WithCancel(context.Background())
 	timeoutContext := time.Duration(config.GetInt("CONTEXT_TIMEOUT_SECS")) * time.Second
-
-	ethclient.Initialize()
-	defer ethclient.Finalize()
-
+	
 	database.Initialize(ctx)
 	defer database.Finalize(ctx)
 	engine := gin.New()
