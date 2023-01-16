@@ -69,3 +69,9 @@ ex:
 curl --location --request GET 'http://localhost:8080/blocks?limit=2'
 ```
 
+### DB
+
+![alt text](https://github.com/ryanCool/ethService/blob/master/docs/blocks_db.png)
+
+![alt text](https://github.com/ryanCool/ethService/blob/master/docs/transaction_db.png)
+
