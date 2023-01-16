@@ -30,7 +30,7 @@ func main() {
 	// Create root context.
 	ctx, cancel := context.WithCancel(context.Background())
 	timeoutContext := time.Duration(config.GetInt("CONTEXT_TIMEOUT_SECS")) * time.Second
-	
+
 	database.Initialize(ctx)
 	defer database.Finalize(ctx)
 	engine := gin.New()

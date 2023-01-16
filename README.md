@@ -1,5 +1,9 @@
-# ethService
-This service provide api to query blocks info and transaction info
+# eth scan service
+ - Scan block from n to latest and then store block include transaction info to db.  
+ - Subscribe for new block event and then store block include transaction info to db.
+
+# api service
+ - Api service provide api to query blocks info and transaction info.
 
 ## run
 This command will run two containers locally , database and service server.
@@ -83,3 +87,5 @@ curl --location --request GET 'http://localhost:8080/blocks?limit=2'
 
 ![alt text](https://github.com/ryanCool/ethService/blob/master/docs/transaction_db.png)
 
+### Workflow
+![alt text](https://github.com/ryanCool/ethService/blob/master/docs/workflow.png)
