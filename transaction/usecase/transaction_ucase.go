@@ -93,7 +93,6 @@ func (tu *transactionUseCase) Save(ctx context.Context, blockHash string, transa
 
 	//todo use go routine
 	err = tu.saveReceipt(ctx, transaction.Hash())
-
 	if err != nil {
 		return err
 	}

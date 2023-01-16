@@ -68,6 +68,7 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 	if err != nil {
 		log.Error().Err(err)
 	}
+
 	latestNum := header.Number.Uint64()
 	targetBlockNum := syncFromNBlock
 

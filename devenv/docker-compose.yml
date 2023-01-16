@@ -20,6 +20,9 @@ services:
       CONFIRMED_BLOCK_NUM: 20
       SYNC_BLOCK_FROM_N: 16412541
       SCAN_WORK_NUM: 3
+      SQL_MAX_IDLE_CONNS: 10
+      SQL_MAX_OPEN_CONNS: 100
+      SQL_CONN_MAX_LIFE_MINUTES: 60
     restart: 'always'
     ports:
       - "8080:8080"

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/rs/zerolog/log"
+	"github.com/ryanCool/ethService/config"
 	"gorm.io/gorm/logger"
+	"time"
 
 	"gorm.io/gorm"
 	// PostgreSQL driver.
@@ -15,6 +17,14 @@ import (
 // postgresDB is the concrete PostgresSQL handle to a SQL database.
 type postgresDB struct{ *gorm.DB }
 
+var maxIdleConnsNum, maxOpenConnsNum, connMaxLifeMinutes int
+
+func init() {
+	maxIdleConnsNum = config.GetInt("SQL_MAX_IDLE_CONNS")
+	maxOpenConnsNum = config.GetInt("SQL_MAX_OPEN_CONNS")
+	connMaxLifeMinutes = config.GetInt("SQL_CONN_MAX_LIFE_MINUTES")
+}
+
 // initialize initializes the PostgreSQL database handle.
 func (db *postgresDB) initialize(ctx context.Context, cfg dbConfig) {
 	// Assemble PostgreSQL database source and setup database handle.
@@ -23,13 +33,24 @@ func (db *postgresDB) initialize(ctx context.Context, cfg dbConfig) {
 
 	// Connect to the PostgreSQL database.
 	var err error
-
-	//todo adjust pool size
-	//todo turn off log
 	db.DB, err = gorm.Open(postgres.Open(dbSource), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-		//Logger: logger.Default.LogMode(logger.Silent),
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
+
+	// Get generic database object sql.DB to set optional params
+	sqlDB, err := db.DB.DB()
+	if err != nil {
+		panic("Get generic database object sql.DB fail")
+	}
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	sqlDB.SetMaxIdleConns(maxIdleConnsNum)
+
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	sqlDB.SetMaxOpenConns(maxOpenConnsNum)
+
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	sqlDB.SetConnMaxLifetime(time.Duration(connMaxLifeMinutes) * time.Minute)
+
 	if err != nil {
 		panic(err)
 	}
