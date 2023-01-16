@@ -60,9 +60,12 @@ func (tu *transactionUseCase) saveReceipt(ctx context.Context, txHash common.Has
 		}
 		logs = append(logs, tl)
 	}
-	err = tu.repo.SaveReceiptAndLogs(ctx, txHash.String(), logs)
-	if err != nil {
-		return err
+
+	if len(logs) > 0 {
+		err = tu.repo.SaveReceiptAndLogs(ctx, txHash.String(), logs)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

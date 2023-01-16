@@ -34,7 +34,7 @@ func (db *postgresDB) initialize(ctx context.Context, cfg dbConfig) {
 	// Connect to the PostgreSQL database.
 	var err error
 	db.DB, err = gorm.Open(postgres.Open(dbSource), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 
 	// Get generic database object sql.DB to set optional params

@@ -70,6 +70,7 @@ func (bu *blockUseCase) scanToLatest(ctx context.Context) {
 	}
 
 	latestNum := header.Number.Uint64()
+	log.Info().Uint64("latestNum", latestNum).Msg("latest block num=")
 	targetBlockNum := syncFromNBlock
 
 	//use buffer channel to implement a worker pool with config number
@@ -141,13 +142,13 @@ func (bu *blockUseCase) setOldBlock(ctx context.Context, oldBlockNum uint64) {
 			log.Error().Err(err)
 		}
 
-		for _, transaction := range transactions {
-			go bu.transactionUcase.Save(ctx, b.BlockHash, transaction)
-		}
-
 		err = bu.newBlock(ctx, b)
 		if err != nil {
 			log.Error().Err(err)
+		}
+
+		for _, transaction := range transactions {
+			go bu.transactionUcase.Save(ctx, b.BlockHash, transaction)
 		}
 
 	}
