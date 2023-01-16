@@ -37,9 +37,17 @@ param : SCAN_WORK_NUM (uint32)
 - Configure scan worker num to adjust speed of scan block process.
 - Note: default rpc/ws endpoint is free trial . Too many worker num may exceed ratelimit of infura.
 
+#### worker num
+param : WRITE_TRANSACTION_WORK_NUM (uint32)
+- Configure transaction worker num to adjust speed of scan block process.
+- Note: default rpc/ws endpoint is free trial . Too many worker num may exceed ratelimit of infura.
+
+
 #### fetch block from N
 param : SYNC_BLOCK_FROM_N (uint64)
 - Configure this number to tell service fetch block from which block number.
+
+
 
 #### stable block num
 param : CONFIRMED_BLOCK_NUM (uint64)
