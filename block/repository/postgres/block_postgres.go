@@ -25,7 +25,7 @@ func (p *postgresBlockRepository) DeleteByNum(ctx context.Context, blockNum uint
 
 func (p *postgresBlockRepository) List(ctx context.Context, limit int) ([]domain.BlockDb, error) {
 	var res []domain.BlockDb
-	if err := p.Db.Table("eth.blocks").Order("block_num desc").Find(&res).Error; err != nil {
+	if err := p.Db.Table("eth.blocks").Limit(limit).Order("block_num desc").Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil

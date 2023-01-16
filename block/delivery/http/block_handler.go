@@ -33,6 +33,11 @@ func (a *BlockHandler) ListBlock(ctx *gin.Context) {
 		iLimit = 20
 	}
 
+	if iLimit > 100 {
+		ctx.JSON(http.StatusBadRequest, "limit should be 0~100")
+		return
+	}
+
 	results, err := a.BUseCase.List(ctx, iLimit)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)

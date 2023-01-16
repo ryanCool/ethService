@@ -5,5 +5,5 @@ run:
 	cd devenv ; docker-compose pull ; docker-compose up -d --build; cd ..
 
 clean:
-	@echo "Making devenv..."
+	@echo "Cleaning devenv..."
 	cd devenv ; docker-compose down ; cd ..
