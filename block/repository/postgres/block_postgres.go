@@ -19,6 +19,10 @@ func (p *postgresBlockRepository) Create(ctx context.Context, block *domain.Bloc
 	return p.Db.Table("eth.blocks").Create(&block).Error
 }
 
+func (p *postgresBlockRepository) DeleteByNum(ctx context.Context, blockNum uint64) error {
+	return p.Db.Table("eth.blocks").Where("block_num = ?", blockNum).Delete(&domain.BlockDb{}).Error
+}
+
 func (p *postgresBlockRepository) List(ctx context.Context, limit int) ([]domain.BlockDb, error) {
 	var res []domain.BlockDb
 	if err := p.Db.Table("eth.blocks").Order("block_num desc").Find(&res).Error; err != nil {

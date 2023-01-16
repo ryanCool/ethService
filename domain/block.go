@@ -20,6 +20,7 @@ type BlockDb struct {
 type BlockRepository interface {
 	List(ctx context.Context, limit int) ([]BlockDb, error)
 	Create(ctx context.Context, block *BlockDb) error
+	DeleteByNum(ctx context.Context, blockNum uint64) error
 	SetStable(ctx context.Context, blockNum uint64, stable bool) error
 	GetByNumber(ctx context.Context, blockNum uint64) (*BlockDb, error)
 }
