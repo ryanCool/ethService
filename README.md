@@ -47,3 +47,25 @@ param : CONFIRMED_BLOCK_NUM (uint64)
 - We usually give a number to assume pass through such count blocks , this block define as stable one.
 
 
+## API 
+### Get Transaction Info
+[Get] /transaction/:txHash
+```
+ex:
+curl --location --request GET 'http://localhost:8080/transaction/0xd276699999cb630c2667dd240496c7237cd2218e16e1a1d47299ae86a14427a2'
+```
+
+### Get Block Info
+[Get] /blocks/:id
+```
+ex:
+curl --location --request GET 'http://localhost:8080/blocks/16413972'
+```
+
+### List Latest n Blocks
+[Get] /blocks?limit=n
+```
+ex:
+curl --location --request GET 'http://localhost:8080/blocks?limit=2'
+```
+
