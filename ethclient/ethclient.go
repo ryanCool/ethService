@@ -6,7 +6,6 @@ import (
 )
 
 var endpointURL, wsEndpointURL string
-var confirmedNum int
 var (
 	WsClient  *ethclient.Client
 	RpcClient *ethclient.Client

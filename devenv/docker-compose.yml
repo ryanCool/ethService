@@ -1,9 +1,9 @@
 version: '3'
 services:
-  ethservice:
+  api:
     build:
       context: ../
-      dockerfile: Dockerfile
+      dockerfile: api.Dockerfile
     environment:
       DATABASE_DIALECT: postgres
       DATABASE_USERNAME: postgres
@@ -17,6 +17,28 @@ services:
       GIN_MODE: debug
       JSON_RPC_ENDPOINT: https://mainnet.infura.io/v3/49c81384a9ed44f1bcdb04c5efbc776f
       WS_ENDPOINT: wss://mainnet.infura.io/ws/v3/49c81384a9ed44f1bcdb04c5efbc776f
+      SQL_MAX_IDLE_CONNS: 10
+      SQL_MAX_OPEN_CONNS: 100
+      SQL_CONN_MAX_LIFE_MINUTES: 60
+    restart: 'always'
+    ports:
+      - "8080:8080"
+    depends_on:
+      - 'db'
+  ethservice:
+    build:
+      context: ../
+      dockerfile: eth.Dockerfile
+    environment:
+      DATABASE_DIALECT: postgres
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: ethService0114
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: postgres
+      CONTEXT_TIMEOUT_SECS: 10
+      JSON_RPC_ENDPOINT: https://mainnet.infura.io/v3/49c81384a9ed44f1bcdb04c5efbc776f
+      WS_ENDPOINT: wss://mainnet.infura.io/ws/v3/49c81384a9ed44f1bcdb04c5efbc776f
       CONFIRMED_BLOCK_NUM: 20
       SYNC_BLOCK_FROM_N: 16412541
       SCAN_WORK_NUM: 2
@@ -25,8 +47,6 @@ services:
       SQL_MAX_OPEN_CONNS: 100
       SQL_CONN_MAX_LIFE_MINUTES: 60
     restart: 'always'
-    ports:
-      - "8080:8080"
     depends_on:
       - 'db'
   db:

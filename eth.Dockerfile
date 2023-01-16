@@ -1,12 +1,12 @@
 # Builder image.
 FROM golang as builder
 
-COPY . /build
+COPY ../.. /build
 WORKDIR /build
 
 RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-  go build -o ./ethService ./app/main.go
+  go build -o ./ethService ./cmd/ethScanService/main.go
 
 # Runtime image.
 FROM alpine

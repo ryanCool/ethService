@@ -23,16 +23,14 @@ type blockUseCase struct {
 var syncFromNBlock *big.Int
 var confirmedNum, scanWorkerNum, writeTransactionWorkerNum int
 
-func init() {
+//Initialize init cron job to subscribe new block event through websocket endpoint
+func (bu *blockUseCase) Initialize(ctx context.Context) {
 	confirmedNum = config.GetInt("CONFIRMED_BLOCK_NUM")
 	scanWorkerNum = config.GetInt("SCAN_WORK_NUM")
 	syncFromNBlock = config.GetBigInt("SYNC_BLOCK_FROM_N")
 	writeTransactionWorkerNum = config.GetInt("WRITE_TRANSACTION_WORK_NUM")
-}
 
-//Initialize init cron job to subscribe new block event through websocket endpoint
-func (bu *blockUseCase) Initialize(ctx context.Context) {
-	//go bu.subscribeNewBlock(ctx)
+	go bu.subscribeNewBlock(ctx)
 	go bu.scanToLatest(ctx)
 }
 
