@@ -29,7 +29,7 @@ func (p *postgresBlockRepository) List(ctx context.Context, limit int) ([]domain
 
 func (p *postgresBlockRepository) GetByNumber(ctx context.Context, blockNum uint64) (*domain.BlockDb, error) {
 	var res *domain.BlockDb
-	if err := p.Db.Table("eth.blocks").Where("block_num = ?", blockNum).First(&res).Error; err != nil {
+	if err := p.Db.Table("eth.blocks").Where("block_num = ?", blockNum).First(res).Error; err != nil {
 		return nil, err
 	}
 	return res, nil
