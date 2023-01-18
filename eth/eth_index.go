@@ -162,8 +162,8 @@ func (es *ethScan) saveBlock(ctx context.Context, blockNum uint64, stable bool) 
 			if err != nil {
 				log.Err(err).Msg("save transaction fail when sync to latest block")
 			}
+			<-c
 		}(*transaction)
-		<-c
 	}
 	return nil
 }
