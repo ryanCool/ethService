@@ -22,7 +22,7 @@ func (es *ethScan) Initialize(ctx context.Context) {
 	writeTransactionWorkerNum = config.GetInt("WRITE_TRANSACTION_WORK_NUM")
 
 	go es.subscribeNewBlock(ctx)
-	go es.scanToLatest(ctx)
+	//go es.scanToLatest(ctx)
 }
 
 type ethScan struct {
@@ -157,12 +157,12 @@ func (es *ethScan) saveBlock(ctx context.Context, blockNum uint64, stable bool) 
 	c := make(chan bool, writeTransactionWorkerNum)
 	for _, transaction := range transactions {
 		c <- true
-		go func() {
-			err = es.Save(ctx, block.BlockHash, transaction)
+		go func(transaction types.Transaction) {
+			err = es.Save(ctx, block.BlockHash, &transaction)
 			if err != nil {
 				log.Err(err).Msg("save transaction fail when sync to latest block")
 			}
-		}()
+		}(*transaction)
 		<-c
 	}
 	return nil
